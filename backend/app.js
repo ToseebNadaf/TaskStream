@@ -1,5 +1,6 @@
 import express from "express";
 import { config } from "dotenv";
+import cors from "cors";
 import userRoutes from "./routes/userRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
@@ -11,6 +12,8 @@ config({
 });
 
 const app = express();
+app.use(express.json());
+app.use(cors());
 
 app.use("/api/v1", userRoutes);
 app.use("/api/v1", blogRoutes);
