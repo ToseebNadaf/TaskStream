@@ -1,4 +1,10 @@
-import { createBlogSchema, likeBlogSchema } from "../utils/validation.js";
+import {
+  createBlogSchema,
+  deleteCommentSchema,
+  getBlogCommentsSchema,
+  getRepliesSchema,
+  likeBlogSchema,
+} from "../utils/validation.js";
 
 export const validateBlog = (req, res, next) => {
   try {
@@ -14,6 +20,39 @@ export const validateBlog = (req, res, next) => {
 export const validateRequest = (req, res, next) => {
   try {
     likeBlogSchema.parse(req.body);
+    next();
+  } catch (err) {
+    res.status(400).json({
+      error: err.errors.map((e) => e.message).join(", "),
+    });
+  }
+};
+
+export const validateGetBlogComments = (req, res, next) => {
+  try {
+    getBlogCommentsSchema.parse(req.body);
+    next();
+  } catch (err) {
+    res.status(400).json({
+      error: err.errors.map((e) => e.message).join(", "),
+    });
+  }
+};
+
+export const validateRepliesRequest = (req, res, next) => {
+  try {
+    getRepliesSchema.parse(req.body);
+    next();
+  } catch (err) {
+    res
+      .status(400)
+      .json({ error: err.errors.map((e) => e.message).join(", ") });
+  }
+};
+
+export const validateCommentRequest = () => (req, res, next) => {
+  try {
+    deleteCommentSchema.parse(req.body);
     next();
   } catch (err) {
     res.status(400).json({
