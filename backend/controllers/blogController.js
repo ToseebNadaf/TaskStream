@@ -3,13 +3,17 @@ import { nanoid } from "nanoid";
 import Blog from "../models/Blog.js";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
+import Comment from "../models/Comment.js";
 import {
   createBlogSchema,
+  deleteBlogSchema,
   getBlogSchema,
   isLikedByUserSchema,
   latestBlogsSchema,
   searchBlogsCountSchema,
   searchBlogsSchema,
+  userWrittenBlogsCountSchema,
+  userWrittenBlogsSchema,
 } from "../utils/validation.js";
 
 export const getLatestBlogs = async (req, res) => {
@@ -280,6 +284,107 @@ export const isLikedByUser = async (req, res) => {
 
     return res.status(200).json({ result });
   } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const getUserWrittenBlogs = async (req, res) => {
+  try {
+    const validatedData = userWrittenBlogsSchema.parse(req.body);
+    const { page, draft, query, deletedDocCount } = validatedData;
+
+    let user_id = req.user;
+    let maxLimit = 5;
+    let skipDocs = (page - 1) * maxLimit;
+
+    if (deletedDocCount) {
+      skipDocs -= deletedDocCount;
+    }
+
+    const blogs = await Blog.find({
+      author: user_id,
+      draft,
+      title: new RegExp(query, "i"),
+    })
+      .skip(skipDocs)
+      .limit(maxLimit)
+      .sort({ publishedAt: -1 })
+      .select("title banner publishedAt blog_id activity des draft -_id");
+
+    return res.status(200).json({ blogs });
+  } catch (err) {
+    if (err instanceof Error) {
+      return res.status(400).json({ error: err.message });
+    }
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const getUserWrittenBlogsCount = async (req, res) => {
+  const { user_id } = req.user;
+  const { draft, query } = req.body;
+
+  try {
+    userWrittenBlogsCountSchema.parse({ draft, query });
+
+    Blog.countDocuments({
+      author: user_id,
+      draft,
+      title: new RegExp(query, "i"),
+    })
+      .then((count) => {
+        return res.status(200).json({ totalDocs: count });
+      })
+      .catch((err) => {
+        console.log(err.message);
+        return res.status(500).json({ error: err.message });
+      });
+  } catch (error) {
+    return res.status(400).json({
+      error: "Invalid request data",
+    });
+  }
+};
+
+export const deleteBlog = async (req, res) => {
+  const user_id = req.user;
+
+  try {
+    deleteBlogSchema.parse(req.body);
+  } catch (error) {
+    return res.status(400).json({
+      error: "Invalid request data",
+      details: error.errors,
+    });
+  }
+
+  const { blog_id } = req.body;
+
+  try {
+    const blog = await Blog.findOneAndDelete({ blog_id });
+
+    if (!blog) {
+      return res.status(404).json({ error: "Blog not found" });
+    }
+
+    await Notification.deleteMany({ blog: blog._id });
+    console.log("Notifications deleted");
+
+    await Comment.deleteMany({ blog_id: blog._id });
+    console.log("Comments deleted");
+
+    await User.findOneAndUpdate(
+      { _id: user_id },
+      {
+        $pull: { blog: blog._id },
+        $inc: { "account_info.total_posts": blog.draft ? 0 : -1 },
+      }
+    );
+    console.log("Blog deleted from user's account");
+
+    return res.status(200).json({ status: "done" });
+  } catch (err) {
+    console.error(err.message);
     return res.status(500).json({ error: err.message });
   }
 };

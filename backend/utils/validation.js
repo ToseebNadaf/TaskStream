@@ -135,3 +135,61 @@ export const likeBlogSchema = z.object({
 export const isLikedByUserSchema = z.object({
   _id: z.string().min(1, "Blog ID is required"),
 });
+
+export const userWrittenBlogsSchema = z.object({
+  page: z.number().min(1, "Page number should be at least 1").int(),
+  draft: z.boolean(),
+  query: z.string().optional(),
+  deletedDocCount: z.number().optional(),
+});
+
+export const userWrittenBlogsCountSchema = z.object({
+  draft: z.boolean().optional(),
+  query: z.string().optional(),
+});
+
+export const deleteBlogSchema = z.object({
+  blog_id: z.string().nonempty("Blog ID is required"),
+});
+
+// ---------------------------------COMMENT VALIDATION START----------------------------------------------
+
+export const addCommentSchema = z.object({
+  _id: z.string().min(1, "Blog ID is required"),
+  comment: z.string().min(1, "Write something to leave a comment"),
+  blog_author: z.string().min(1, "Blog author is required"),
+  replying_to: z.string().optional(),
+  notification_id: z.string().optional(),
+});
+
+export const getBlogCommentsSchema = z.object({
+  blog_id: z.string().nonempty("Blog ID is required"),
+  skip: z.number().int().nonnegative("Skip must be a non-negative integer"),
+});
+
+export const getRepliesSchema = z.object({
+  _id: z.string().nonempty("Comment ID is required."),
+  skip: z.number().min(0, "Skip value must be zero or greater."),
+});
+
+export const deleteCommentSchema = z.object({
+  _id: z.string().nonempty("Comment ID is required"),
+});
+
+// ---------------------------------NOTIFICATION VALIDATION START----------------------------------------------
+
+export const newNotificationValidation = z.object({
+  user_id: z.string().nonempty(),
+});
+
+export const notificationValidation = z.object({
+  page: z.number().min(1, "Page must be at least 1"),
+  filter: z
+    .enum(["all", "comment", "like", "reply"], "Invalid filter type")
+    .default("all"),
+  deletedDocCount: z.number().optional().default(0),
+});
+
+export const notificationFilterSchema = z.object({
+  filter: z.string().optional(),
+});

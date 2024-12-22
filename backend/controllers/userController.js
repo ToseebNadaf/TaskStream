@@ -15,13 +15,13 @@ import { generateUsername } from "../utils/userUtils.js";
 import { formatDatatoSend } from "../utils/authUtils.js";
 import { signinSchema } from "../utils/validation.js";
 
-export const getUploadUrl = async () => {
+export const getUploadUrl = async (req, res) => {
   try {
     const url = await generateUploadURL();
     res.status(200).json({ uploadURL: url });
   } catch (err) {
-    console.log(err.message);
-    res.status(500).json({ error: err.message });
+    console.error(err.message);
+    res.status(500).json({ error: "Failed to generate upload URL" });
   }
 };
 

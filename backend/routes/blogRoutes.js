@@ -1,10 +1,13 @@
 import express from "express";
 import {
   createBlog,
+  deleteBlog,
   getAllLatestBlogsCount,
   getBlog,
   getLatestBlogs,
   getTrendingBlogs,
+  getUserWrittenBlogs,
+  getUserWrittenBlogsCount,
   isLikedByUser,
   likeBlog,
   searchBlogs,
@@ -24,5 +27,8 @@ router.post("/create-blog", verifyJWT, validateBlog, createBlog);
 router.post("/get-blog", getBlog);
 router.post("/like-blog", verifyJWT, validateRequest, likeBlog);
 router.post("/isliked-by-user", verifyJWT, isLikedByUser);
+router.post("/user-written-blogs", verifyJWT, getUserWrittenBlogs);
+router.post("/user-written-blogs-count", verifyJWT, getUserWrittenBlogsCount);
+router.post("/delete-blog", verifyJWT, deleteBlog);
 
 export default router;
