@@ -2,7 +2,7 @@ import { verifyAccessToken } from "../utils/authUtils.js";
 
 export const verifyJWT = (req, res, next) => {
   const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  const token = authHeader;
 
   if (token == null) {
     return res.status(401).json({ error: "No access token" });
