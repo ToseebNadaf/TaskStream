@@ -5,8 +5,11 @@ import { generateUploadURL } from "../utils/s3Utils.js";
 import { getAuth } from "firebase-admin/auth";
 import {
   changePasswordSchema,
+  getProfileSchema,
   searchUsersSchema,
   signupSchema,
+  updateProfileImgSchema,
+  updateProfileSchema,
 } from "../utils/validation.js";
 import { generateUsername } from "../utils/userUtils.js";
 import { formatDatatoSend } from "../utils/authUtils.js";
@@ -200,6 +203,102 @@ export const searchUsers = async (req, res) => {
       return res
         .status(400)
         .json({ error: err.errors.map((e) => e.message).join(", ") });
+    }
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const getProfile = async (req, res) => {
+  try {
+    const { username } = getProfileSchema.parse(req.body);
+
+    const user = await User.findOne({
+      "personal_info.username": username,
+    }).select("-personal_info.password -google_auth -updatedAt -blogs");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    return res.status(200).json(user);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return res
+        .status(400)
+        .json({ error: err.errors.map((e) => e.message).join(", ") });
+    }
+
+    console.log(err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const updateProfileImg = async (req, res) => {
+  try {
+    const parsedData = updateProfileImgSchema.parse(req.body);
+
+    const { url } = parsedData;
+
+    await User.findOneAndUpdate(
+      { _id: req.user },
+      { "personal_info.profile_img": url }
+    );
+
+    return res.status(200).json({ profile_img: url });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ error: err.errors });
+    }
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  const { username, bio, social_links } = req.body;
+
+  try {
+    updateProfileSchema.parse({ username, bio, social_links });
+  } catch (err) {
+    return res.status(403).json({ error: err.errors[0].message });
+  }
+
+  let socialLinksArr = Object.keys(social_links || {});
+
+  try {
+    for (let i = 0; i < socialLinksArr.length; i++) {
+      if (social_links[socialLinksArr[i]].length) {
+        let hostname = new URL(social_links[socialLinksArr[i]]).hostname;
+
+        if (
+          !hostname.includes(`${socialLinksArr[i]}.com`) &&
+          socialLinksArr[i] != "website"
+        ) {
+          return res.status(403).json({
+            error: `${socialLinksArr[i]} link is invalid. Please enter a valid link`,
+          });
+        }
+      }
+    }
+  } catch (err) {
+    return res.status(500).json({
+      error: "You must provide full social links with http(s) included",
+    });
+  }
+
+  let updateObj = {
+    "personal_info.username": username,
+    "personal_info.bio": bio,
+    social_links,
+  };
+
+  try {
+    await User.findOneAndUpdate({ _id: req.user }, updateObj, {
+      runValidators: true,
+    });
+    return res.status(200).json({ username });
+  } catch (err) {
+    if (err.code == 11000) {
+      return res.status(500).json({ error: "Username is already taken" });
     }
     return res.status(500).json({ error: err.message });
   }

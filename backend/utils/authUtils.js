@@ -4,10 +4,6 @@ export const generateAccessToken = (userId, secretKey) => {
   return jwt.sign({ id: userId }, secretKey);
 };
 
-export const verifyAccessToken = (token, secretKey) => {
-  return jwt.verify(token, secretKey);
-};
-
 export const formatDatatoSend = (user) => {
   const access_token = generateAccessToken(
     user._id,

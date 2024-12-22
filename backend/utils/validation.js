@@ -37,6 +37,31 @@ export const searchUsersSchema = z.object({
   query: z.string().min(1, "Query is required").max(100, "Query too long"),
 });
 
+export const getProfileSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+});
+
+export const updateProfileImgSchema = z.object({
+  url: z.string().url("Invalid image URL").nonempty("Image URL is required"),
+});
+
+export const updateProfileSchema = z.object({
+  username: z
+    .string()
+    .min(3, { message: "Username should be at least 3 letters long" }),
+  bio: z
+    .string()
+    .max(150, { message: "Bio should not be more than 150 characters" }),
+  social_links: z
+    .object({
+      twitter: z.string().url().optional(),
+      linkedin: z.string().url().optional(),
+      facebook: z.string().url().optional(),
+      website: z.string().url().optional(),
+    })
+    .optional(),
+});
+
 // ---------------------------------BLOG VALIDATION START----------------------------------------------
 
 export const latestBlogsSchema = z.object({
@@ -68,4 +93,45 @@ export const searchBlogsCountSchema = z.object({
   tag: z.string().optional(),
   author: z.string().optional(),
   query: z.string().optional(),
+});
+
+export const createBlogSchema = z.object({
+  title: z.string().min(1, { message: "Title is required" }),
+  des: z
+    .string()
+    .max(200, { message: "Description should be under 200 characters" })
+    .optional(),
+  banner: z.string().min(1, { message: "Banner is required" }).optional(),
+  tags: z
+    .array(z.string())
+    .max(10, { message: "Maximum 10 tags allowed" })
+    .optional(),
+  content: z
+    .object({
+      blocks: z
+        .array(
+          z.object({
+            text: z.string().optional(),
+            type: z.string().optional(),
+          })
+        )
+        .min(1, { message: "Blog content should not be empty" }),
+    })
+    .optional(),
+  draft: z.boolean().optional(),
+});
+
+export const getBlogSchema = z.object({
+  blog_id: z.string().nonempty("Blog ID is required"),
+  draft: z.boolean().optional(),
+  mode: z.enum(["view", "edit"]).optional(),
+});
+
+export const likeBlogSchema = z.object({
+  _id: z.string().min(1, { message: "Blog ID is required" }),
+  islikedByUser: z.boolean(),
+});
+
+export const isLikedByUserSchema = z.object({
+  _id: z.string().min(1, "Blog ID is required"),
 });
