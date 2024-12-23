@@ -1,0 +1,12 @@
+body {
+  transform: scale(0.8); /* Scale to 80% */
+  transform-origin: top left; /* Scale from the top-left corner */
+  width: 125%; /* Compensate for scaling */
+  overflow-x: hidden; /* Hide horizontal scroll caused by scaling */
+  height: calc(100% / 0.8); /* Adjust the height to avoid extra bottom space */
+  margin: 0; /* Remove default margin */
+}
+
+html {
+  height: 100%; /* Ensure html element covers full height */
+}

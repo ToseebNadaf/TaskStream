@@ -6,7 +6,7 @@ import {
 } from "../utils/validation.js";
 
 export const checkNewNotification = (req, res) => {
-  const { user_id } = req.user;
+  const user_id  = req.user;
 
   try {
     newNotificationValidation.parse({ user_id });
@@ -35,7 +35,7 @@ export const checkNewNotification = (req, res) => {
 };
 
 export const getNotifications = async (req, res) => {
-  const { user_id } = req.user;
+  const  user_id  = req.user;
   const { page, filter, deletedDocCount } = req.body;
 
   try {
@@ -84,7 +84,7 @@ export const getNotifications = async (req, res) => {
 
 export const getAllNotificationsCount = async (req, res) => {
   const { filter } = req.body;
-  const { user_id } = req.user;
+  const  user_id  = req.user;
 
   try {
     notificationFilterSchema.parse({ filter });

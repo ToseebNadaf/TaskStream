@@ -167,7 +167,7 @@ const deleteComments = (_id) => {
 };
 
 export const deleteComment = async (req, res) => {
-  const { _id } = req.body;
+  const _id = req.body;
   const user_id = req.user;
 
   try {
