@@ -139,7 +139,7 @@ const BlogEditor = () => {
             e.target.classList.remove("disable");
             toast.dismiss(loadingToast);
             toast.success("Saved");
-            setTimeout(() => navigate("/"), 500);
+            setTimeout(() => navigate("/dashboard/blogs?tab=draft"), 500);
           })
           .catch(({ response }) => {
             e.target.classList.remove("disable");

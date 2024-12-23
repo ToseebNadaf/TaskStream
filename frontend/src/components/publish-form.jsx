@@ -100,7 +100,7 @@ const PublishForm = () => {
       );
       toast.dismiss(loadingToast);
       toast.success("Published");
-      setTimeout(() => navigate("/"), 500);
+      setTimeout(() => navigate("/dashboard/blogs"), 500);
     } catch (error) {
       toast.dismiss(loadingToast);
       toast.error(error.response?.data?.error || "Failed to publish blog.");
