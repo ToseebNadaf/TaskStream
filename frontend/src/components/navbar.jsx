@@ -1,9 +1,60 @@
-import React, { useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import React, { useCallback, useContext, useEffect, useState } from "react";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import logo from "../images/logo.png";
+import { UserContext } from "../App";
+import UserNavigationPanel from "./user-navigation";
+import axios from "axios";
 
 const Navbar = () => {
   const [searchBoxVisibility, setSearchBoxVisibility] = useState(false);
+  const [userNavPanel, setUserNavPanel] = useState(false);
+
+  const navigate = useNavigate();
+
+  const {
+    userAuth,
+    userAuth: { access_token, profile_img, new_notification_available },
+    setUserAuth,
+  } = useContext(UserContext);
+
+  useEffect(() => {
+    if (access_token) {
+      const fetchNotifications = async () => {
+        try {
+          const { data } = await axios.get(
+            `${import.meta.env.VITE_SERVER_DOMAIN}/new-notification`,
+            {
+              headers: {
+                Authorization: `${access_token}`,
+              },
+            }
+          );
+          setUserAuth((prevState) => ({ ...prevState, ...data }));
+        } catch (err) {
+          console.error("Error fetching notifications:", err);
+        }
+      };
+
+      fetchNotifications();
+    }
+  }, [access_token, setUserAuth]);
+
+  const handleUserNavPanel = useCallback(() => {
+    setUserNavPanel((prev) => !prev);
+  }, []);
+
+  const handleSearch = (e) => {
+    const query = e.target.value.trim();
+    if (e.keyCode === 13 && query.length > 0) {
+      navigate(`/search/${query}`);
+    }
+  };
+
+  const handleBlur = () => {
+    setTimeout(() => {
+      setUserNavPanel(false);
+    }, 200);
+  };
 
   return (
     <>
@@ -22,7 +73,7 @@ const Navbar = () => {
             type="text"
             placeholder="Search"
             className="w-full md:w-auto bg-grey p-4 pl-6 pr-[12%] md:pr-6 rounded-full placeholder:text-dark-grey md:pl-12"
-            // onKeyDown={handleSearch}
+            onKeyDown={handleSearch}
           />
 
           <i className="fi fi-rr-search absolute right-[10%] md:pointer-events-none md:left-5 top-1/2 -translate-y-1/2 text-xl text-dark-grey"></i>
@@ -41,7 +92,7 @@ const Navbar = () => {
             <p>Write</p>
           </Link>
 
-          {/* {access_token ? (
+          {access_token ? (
             <>
               <Link to="/dashboard/notifications">
                 <button className="w-12 h-12 rounded-full bg-grey relative hover:bg-black/10">
@@ -70,15 +121,15 @@ const Navbar = () => {
               </div>
             </>
           ) : (
-            <> */}
+            <>
               <Link className="btn-dark py-2" to="/signin">
                 Sign In
               </Link>
               <Link className="btn-light py-2 hidden md:block" to="/signup">
                 Sign Up
               </Link>
-            {/* </>
-          )} */}
+            </>
+          )}
         </div>
       </nav>
 
