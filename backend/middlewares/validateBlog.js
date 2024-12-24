@@ -1,6 +1,5 @@
 import {
   createBlogSchema,
-  deleteCommentSchema,
   getBlogCommentsSchema,
   getRepliesSchema,
   likeBlogSchema,
@@ -47,16 +46,5 @@ export const validateRepliesRequest = (req, res, next) => {
     res
       .status(400)
       .json({ error: err.errors.map((e) => e.message).join(", ") });
-  }
-};
-
-export const validateCommentRequest = () => (req, res, next) => {
-  try {
-    deleteCommentSchema.parse(req.body);
-    next();
-  } catch (err) {
-    res.status(400).json({
-      error: err.errors.map((e) => e.message).join(", "),
-    });
   }
 };

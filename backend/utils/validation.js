@@ -172,10 +172,6 @@ export const getRepliesSchema = z.object({
   skip: z.number().min(0, "Skip value must be zero or greater."),
 });
 
-export const deleteCommentSchema = z.object({
-  _id: z.string().nonempty("Comment ID is required"),
-});
-
 // ---------------------------------NOTIFICATION VALIDATION START----------------------------------------------
 
 export const newNotificationValidation = z.object({
