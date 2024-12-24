@@ -163,9 +163,7 @@ const Home = () => {
         <div className="min-w-[40%] lg:min-w-[400px] max-w-min border-l border-grey pl-8 pt-3 max-md:hidden">
           <div className="flex flex-col gap-10">
             <div>
-              <h1 className="font-medium text-xl mb-8">
-                Stories from all interests
-              </h1>
+              <h1 className="font-medium text-xl mb-8">Recommended topics</h1>
 
               <div className="flex gap-3 flex-wrap">
                 {categories.map((category, i) => {
@@ -187,7 +185,7 @@ const Home = () => {
 
             <div>
               <h1 className="font-medium text-xl mb-8">
-                Trending <i className="fi fi-rr-arrow-trend-up"></i>
+                Top picks <i className="fi fi-rr-arrow-trend-up"></i>
               </h1>
 
               {trendingBlogs == null ? (

@@ -64,8 +64,13 @@ const ChangePassword = () => {
   return (
     <AnimationWrapper>
       <Toaster />
-      <form ref={changePasswordForm}>
-        <h1 className="max-md:hidden">Change Password</h1>
+      <form
+        ref={changePasswordForm}
+        className="flex flex-col items-center justify-start min-h-screen"
+      >
+        <h1 className="max-md:hidden capitalize font-bold text-3xl">
+          Change Password
+        </h1>
 
         <div className="py-10 w-full md:max-w-[400px]">
           <InputBox
@@ -85,7 +90,7 @@ const ChangePassword = () => {
 
           <button
             onClick={handleSubmit}
-            className="btn-dark px-10"
+            className="btn-dark px-[9.5rem] mt-10"
             type="submit"
           >
             Change Password

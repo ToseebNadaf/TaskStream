@@ -141,8 +141,8 @@ const Blog = () => {
 
             {similarBlogs != null && similarBlogs.length ? (
               <>
-                <h1 className="text-2xl mt-14 mb-10 font-medium">
-                  Similar Blogs
+                <h1 className="text-3xl mt-20 mb-10 font-medium">
+                  Recommended from WriteFlow
                 </h1>
 
                 {similarBlogs.map((blog, i) => {

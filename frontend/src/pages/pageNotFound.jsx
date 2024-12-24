@@ -18,7 +18,7 @@ const PageNotFound = () => {
         </Link>
       </p>
 
-      <div className="mt-auto">
+      <div className="mt-80">
         <img
           src={logo}
           className="h-20 object-contain block mx-auto select-none"

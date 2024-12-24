@@ -150,14 +150,14 @@ const UserAuthForm = ({ type }) => {
 
           {type == "sign-in" ? (
             <p className="mt-6 text-dark-grey text-xl text-center">
-              Don't have an account?
+              Don't have an account ?
               <Link to="/signup" className="underline text-black text-xl ml-1">
                 Join us today
               </Link>
             </p>
           ) : (
             <p className="mt-6 text-dark-grey text-xl text-center">
-              Already a Member?
+              Already a Member ?
               <Link to="/signin" className="underline text-black text-xl ml-1">
                 Sign in here
               </Link>

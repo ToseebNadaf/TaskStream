@@ -52,7 +52,7 @@ const InPageNavigation = ({
               ref={i == defaultActiveIndex ? activeTabRef : null}
               key={i}
               className={
-                "p-4 px-5 capitalize " +
+                "p-4 px-5 capitalize font-bold " +
                 (inPageNavIndex == i ? "text-black" : "text-dark-grey ") +
                 (defaultHidden.includes(route) ? " md:hidden " : " ")
               }

@@ -68,7 +68,9 @@ const Notifications = () => {
 
   return (
     <div>
-      <h1 className="max-md:hidden">Recent Notifications</h1>
+      <h1 className="max-md:hidden capitalize font-bold text-3xl">
+        Recent Notifications
+      </h1>
 
       <div className="my-8 flex gap-6">
         {filters.map((filterName, i) => {

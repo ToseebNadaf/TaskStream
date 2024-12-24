@@ -192,9 +192,11 @@ const EditProfile = () => {
         <form ref={editProfileForm}>
           <Toaster />
 
-          <h1 className="max-md:hidden">Edit Profile</h1>
+          <h1 className="max-md:hidden capitalize font-bold text-3xl">
+            Edit Profile
+          </h1>
 
-          <div className="flex flex-col lg:flex-row items-start py-10 gap-8 lg:gap-10">
+          <div className="flex flex-col lg:flex-row items-start py-10 gap-8 lg:gap-40">
             <div className="max-lg:center mb-5">
               <label
                 htmlFor="uploadImg"
@@ -298,7 +300,7 @@ const EditProfile = () => {
               </div>
 
               <button
-                className="btn-dark w-auto px-10"
+                className="btn-dark w-auto px-10 mt-8"
                 type="submit"
                 onClick={handleSubmit}
               >

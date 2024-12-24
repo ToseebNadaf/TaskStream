@@ -111,7 +111,7 @@ const PublishForm = () => {
 
   return (
     <AnimationWrapper>
-      <section className="w-screen min-h-screen grid items-center lg:grid-cols-2 py-16 lg:gap-4">
+      <section className="w-screen min-h-screen grid items-center lg:grid-cols-2 py-[16rem] lg:gap-4">
         <Toaster />
 
         <button

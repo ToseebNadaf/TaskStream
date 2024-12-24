@@ -94,7 +94,7 @@ const ManageBlogs = () => {
 
   return (
     <>
-      <h1 className="max-md:hidden">Manage Blogs</h1>
+      <h1 className="max-md:hidden capitalize font-bold text-3xl">Manage Blogs</h1>
 
       <Toaster />
 

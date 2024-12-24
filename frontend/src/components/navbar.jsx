@@ -59,7 +59,7 @@ const Navbar = () => {
   return (
     <>
       <nav className="navbar z-50">
-        <Link to="/" className="flex-none h-8">
+        <Link to="/" className="flex-none h-20">
           <img src={logo} className="w-full mt-1" />
         </Link>
 
@@ -89,7 +89,7 @@ const Navbar = () => {
 
           <Link to="/editor" className="hidden md:flex gap-2 link">
             <i className="fi fi-rr-file-edit"></i>
-            <p>Write</p>
+            <p className="text-xl">Write</p>
           </Link>
 
           {access_token ? (
