@@ -11,40 +11,49 @@ import { filterPaginationData } from "../common/filter-pagination-data";
 import UserCard from "../components/usercard";
 
 const Search = () => {
-  let { query } = useParams();
+  const { query } = useParams();
 
-  let [blogs, setBlog] = useState(null);
-  let [users, setUsers] = useState(null);
+  const [blogs, setBlogs] = useState(null);
+  const [users, setUsers] = useState(null);
 
-  const searchBlogs = ({ page = 1, create_new_arr = false }) => {
-    axios
-      .post(import.meta.env.VITE_SERVER_DOMAIN + "/search-blogs", {
-        query,
+  const searchBlogs = async ({ page = 1, create_new_arr = false }) => {
+    try {
+      const { data } = await axios.post(
+        import.meta.env.VITE_SERVER_DOMAIN + "/search-blogs",
+        { query, page }
+      );
+
+      const formatedData = await filterPaginationData({
+        state: blogs,
+        data: data.blogs,
         page,
-      })
-      .then(async ({ data }) => {
-        let formatedData = await filterPaginationData({
-          state: blogs,
-          data: data.blogs,
-          page,
-          countRoute: "/search-blogs-count",
-          data_to_send: { query },
-          create_new_arr,
-        });
-
-        setBlog(formatedData);
-      })
-      .catch((err) => {
-        console.log(err);
+        countRoute: "/search-blogs-count",
+        data_to_send: { query },
+        create_new_arr,
       });
+
+      setBlogs(formatedData);
+    } catch (err) {
+      console.error("Error fetching blogs:", err);
+    }
   };
 
-  const fetchUsers = () => {
-    axios
-      .post(import.meta.env.VITE_SERVER_DOMAIN + "/search-users", { query })
-      .then(({ data: { users } }) => {
-        setUsers(users);
-      });
+  const fetchUsers = async () => {
+    try {
+      const { data } = await axios.post(
+        import.meta.env.VITE_SERVER_DOMAIN + "/search-users",
+        { query }
+      );
+
+      setUsers(data.users);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    }
+  };
+
+  const resetState = () => {
+    setBlogs(null);
+    setUsers(null);
   };
 
   useEffect(() => {
@@ -53,32 +62,23 @@ const Search = () => {
     fetchUsers();
   }, [query]);
 
-  const resetState = () => {
-    setBlog(null);
-    setUsers(null);
-  };
-
   const UserCardWrapper = () => {
-    return (
-      <>
-        {users == null ? (
-          <Loader />
-        ) : users.length ? (
-          users.map((user, i) => {
-            return (
-              <AnimationWrapper
-                key={i}
-                transition={{ duration: 1, delay: i * 0.08 }}
-              >
-                <UserCard user={user} />
-              </AnimationWrapper>
-            );
-          })
-        ) : (
-          <NoDataMessage message="No user found" />
-        )}
-      </>
-    );
+    if (users === null) {
+      return <Loader />;
+    }
+
+    if (users.length === 0) {
+      return <NoDataMessage message="No user found" />;
+    }
+
+    return users.map((user, i) => (
+      <AnimationWrapper
+        key={user._id || i}
+        transition={{ duration: 1, delay: i * 0.08 }}
+      >
+        <UserCard user={user} />
+      </AnimationWrapper>
+    ));
   };
 
   return (

@@ -24,79 +24,73 @@ export const profileDataStructure = {
     total_reads: 0,
   },
   social_links: {},
-  joinedAt: " ",
+  joinedAt: "",
 };
 
 const ProfilePage = () => {
-  let { id: profileId } = useParams();
+  const { id: profileId } = useParams();
+  const [profile, setProfile] = useState(profileDataStructure);
+  const [loading, setLoading] = useState(true);
+  const [blogs, setBlogs] = useState(null);
+  const [profileLoaded, setProfileLoaded] = useState("");
 
-  let [profile, setProfile] = useState(profileDataStructure);
-  let [loading, setLoading] = useState(true);
-  let [blogs, setBlogs] = useState(null);
-  let [profileLoaded, setProfileLoaded] = useState("");
-
-  let {
-    personal_info: { fullname, username: profile_username, profile_img, bio },
+  const {
+    personal_info: { fullname, username: profileUsername, profile_img, bio },
     account_info: { total_posts, total_reads },
     social_links,
     joinedAt,
   } = profile;
 
-  let {
+  const {
     userAuth: { username },
   } = useContext(UserContext);
 
-  const fetchUserProfile = () => {
-    axios
-      .post(import.meta.env.VITE_SERVER_DOMAIN + "/get-profile", {
-        username: profileId,
-      })
-      .then(({ data: user }) => {
-        if (user != null) {
-          setProfile(user);
-        }
+  const fetchUserProfile = async () => {
+    try {
+      const { data: user } = await axios.post(
+        `${import.meta.env.VITE_SERVER_DOMAIN}/get-profile`,
+        { username: profileId }
+      );
+
+      if (user) {
+        setProfile(user);
         setProfileLoaded(profileId);
-        getBlogs({ user_id: user._id });
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.log(err);
-        setLoading(false);
-      });
+        fetchBlogs({ user_id: user._id });
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      setLoading(false);
+    }
   };
 
-  const getBlogs = ({ page = 1, user_id }) => {
-    user_id = user_id == undefined ? blogs.user_id : user_id;
+  const fetchBlogs = async ({ page = 1, user_id }) => {
+    const authorId = user_id || blogs?.user_id;
 
-    axios
-      .post(import.meta.env.VITE_SERVER_DOMAIN + "/search-blogs", {
-        author: user_id,
-        page,
-      })
-      .then(async ({ data }) => {
-        let formatedData = await filterPaginationData({
-          state: blogs,
-          data: data.blogs,
+    try {
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_SERVER_DOMAIN}/search-blogs`,
+        {
+          author: authorId,
           page,
-          countRoute: "/search-blogs-count",
-          data_to_send: { author: user_id },
-        });
+        }
+      );
 
-        formatedData.user_id = user_id;
-        setBlogs(formatedData);
+      const formattedData = await filterPaginationData({
+        state: blogs,
+        data: data.blogs,
+        page,
+        countRoute: "/search-blogs-count",
+        data_to_send: { author: authorId },
       });
+
+      formattedData.user_id = authorId;
+      setBlogs(formattedData);
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+    }
   };
-
-  useEffect(() => {
-    if (profileId != profileLoaded) {
-      setBlogs(null);
-    }
-
-    if (blogs == null) {
-      resetState();
-      fetchUserProfile();
-    }
-  }, [profileId, blogs]);
 
   const resetState = () => {
     setProfile(profileDataStructure);
@@ -104,11 +98,21 @@ const ProfilePage = () => {
     setProfileLoaded("");
   };
 
+  useEffect(() => {
+    if (profileId !== profileLoaded) {
+      resetState();
+    }
+
+    if (!blogs) {
+      fetchUserProfile();
+    }
+  }, [profileId, blogs]);
+
   return (
     <AnimationWrapper>
       {loading ? (
         <Loader />
-      ) : profile_username.length ? (
+      ) : profileUsername.length ? (
         <section className="h-cover md:flex flex-row-reverse items-start gap-5 min-[1100px]:gap-12">
           <div className="flex flex-col max-md:items-center gap-5 min-w-[250px] md:w-[50%] md:pl-8 md:border-l border-grey md:sticky md:top-[100px] md:py-10">
             <img
@@ -116,7 +120,7 @@ const ProfilePage = () => {
               className="w-48 h-48 bg-grey rounded-full md:w-32 md:h-32"
             />
 
-            <h1 className="text-2xl font-medium">@{profile_username}</h1>
+            <h1 className="text-2xl font-medium">@{profileUsername}</h1>
             <p className="text-xl capitalize h-6">{fullname}</p>
 
             <p>
@@ -170,7 +174,7 @@ const ProfilePage = () => {
                 ) : (
                   <NoDataMessage message="No blogs published" />
                 )}
-                <LoadMoreDataBtn state={blogs} fetchDataFun={getBlogs} />
+                <LoadMoreDataBtn state={blogs} fetchDataFun={fetchBlogs} />
               </>
 
               <AboutUser

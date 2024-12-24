@@ -32,49 +32,52 @@ const BlogInteraction = () => {
     if (access_token) {
       axios
         .post(
-          import.meta.env.VITE_SERVER_DOMAIN + "/isliked-by-user",
+          `${import.meta.env.VITE_SERVER_DOMAIN}/isliked-by-user`,
           { _id },
           {
-            headers: {
-              Authorization: `${access_token}`,
-            },
+            headers: { Authorization: access_token },
           }
         )
         .then(({ data: { result } }) => {
           setLikedByUser(Boolean(result));
         })
-        .catch((err) => {
-          console.log(err);
-        });
+        .catch((err) => console.error("Error checking like status:", err));
     }
-  }, []);
+  }, [_id, access_token, setLikedByUser]);
 
-  const handleLike = () => {
-    if (access_token) {
-      setLikedByUser((preVal) => !preVal);
+  const handleLike = async () => {
+    if (!access_token) {
+      return toast.error("Please sign in to like this blog");
+    }
 
-      !islikedByUser ? total_likes++ : total_likes--;
+    try {
+      const newLikeStatus = !isLikedByUser;
+      setLikedByUser(newLikeStatus);
 
-      setBlog({ ...blog, activity: { ...activity, total_likes } });
+      const updatedTotalLikes = newLikeStatus
+        ? total_likes + 1
+        : total_likes - 1;
 
-      axios
-        .post(
-          import.meta.env.VITE_SERVER_DOMAIN + "/like-blog",
-          { _id, islikedByUser },
-          {
-            headers: {
-              Authorization: `${access_token}`,
-            },
-          }
-        )
-        .then(({ data }) => {
-          console.log(data);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    } else {
-      toast.error("Please signin to like this blog");
+      setBlog((prevBlog) => ({
+        ...prevBlog,
+        activity: { ...prevBlog.activity, total_likes: updatedTotalLikes },
+      }));
+
+      await axios.post(
+        `${import.meta.env.VITE_SERVER_DOMAIN}/like-blog`,
+        { _id, islikedByUser },
+        {
+          headers: { Authorization: access_token },
+        }
+      );
+    } catch (err) {
+      setLikedByUser(isLikedByUser);
+      setBlog((prevBlog) => ({
+        ...prevBlog,
+        activity: { ...prevBlog.activity, total_likes },
+      }));
+      console.error("Error liking blog:", err);
+      toast.error("Failed to update like. Please try again.");
     }
   };
 

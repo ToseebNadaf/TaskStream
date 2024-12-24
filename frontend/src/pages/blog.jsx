@@ -21,16 +21,16 @@ export const blogStructure = {
 export const BlogContext = createContext({});
 
 const Blog = () => {
-  let { blog_id } = useParams();
+  const { blog_id } = useParams();
 
   const [blog, setBlog] = useState(blogStructure);
   const [similarBlogs, setSimilarBlogs] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [islikedByUser, setLikedByUser] = useState(false);
+  const [isLikedByUser, setLikedByUser] = useState(false);
   const [commentsWrapper, setCommentsWrapper] = useState(false);
   const [totalParentCommentsLoaded, setTotalParentCommentsLoaded] = useState(0);
 
-  let {
+  const {
     title,
     content,
     banner,
@@ -40,32 +40,39 @@ const Blog = () => {
     publishedAt,
   } = blog;
 
-  const fetchBlog = () => {
-    axios
-      .post(import.meta.env.VITE_SERVER_DOMAIN + "/get-blog", { blog_id })
-      .then(async ({ data: { blog } }) => {
-        blog.comments = await fetchComments({
-          blog_id: blog._id,
-          setParentCommentCountFun: setTotalParentCommentsLoaded,
-        });
-        setBlog(blog);
-
-        axios
-          .post(import.meta.env.VITE_SERVER_DOMAIN + "/search-blogs", {
-            tag: blog.tags[0],
-            page: 1,
-            limit: 6,
-            eliminate_blog: blog_id,
-          })
-          .then(({ data }) => {
-            setSimilarBlogs(data.blogs);
-          });
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.log(err);
-        setLoading(false);
+  const fetchBlog = async () => {
+    try {
+      const {
+        data: { blog },
+      } = await axios.post(`${import.meta.env.VITE_SERVER_DOMAIN}/get-blog`, {
+        blog_id,
       });
+
+      const commentsData = await fetchComments({
+        blog_id: blog._id,
+        setParentCommentCountFun: setTotalParentCommentsLoaded,
+      });
+
+      blog.comments = commentsData;
+      setBlog(blog);
+
+      const {
+        data: { blogs },
+      } = await axios.post(
+        `${import.meta.env.VITE_SERVER_DOMAIN}/search-blogs`,
+        {
+          tag: blog.tags[0],
+          page: 1,
+          limit: 6,
+          eliminate_blog: blog_id,
+        }
+      );
+      setSimilarBlogs(blogs);
+    } catch (error) {
+      console.error("Error fetching blog data:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -91,7 +98,7 @@ const Blog = () => {
           value={{
             blog,
             setBlog,
-            islikedByUser,
+            isLikedByUser,
             setLikedByUser,
             commentsWrapper,
             setCommentsWrapper,

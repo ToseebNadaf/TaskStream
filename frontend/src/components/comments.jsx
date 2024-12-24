@@ -12,28 +12,26 @@ export const fetchComments = async ({
   setParentCommentCountFun,
   comment_array = null,
 }) => {
-  let res;
+  try {
+    const { data } = await axios.post(
+      `${import.meta.env.VITE_SERVER_DOMAIN}/get-blog-comments`,
+      { blog_id, skip }
+    );
 
-  await axios
-    .post(import.meta.env.VITE_SERVER_DOMAIN + "/get-blog-comments", {
-      blog_id,
-      skip,
-    })
-    .then(({ data }) => {
-      data.map((comment) => {
-        comment.childrenLevel = 0;
-      });
+    const updatedData = data.map((comment) => ({
+      ...comment,
+      childrenLevel: 0,
+    }));
 
-      setParentCommentCountFun((preVal) => preVal + data.length);
+    setParentCommentCountFun((prev) => prev + updatedData.length);
 
-      if (comment_array == null) {
-        res = { results: data };
-      } else {
-        res = { results: [...comment_array, ...data] };
-      }
-    });
-
-  return res;
+    return {
+      results: comment_array ? [...comment_array, ...updatedData] : updatedData,
+    };
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    return comment_array ? { results: comment_array } : { results: [] };
+  }
 };
 
 const CommentsContainer = () => {
@@ -53,14 +51,17 @@ const CommentsContainer = () => {
   } = useContext(BlogContext);
 
   const loadMoreComments = async () => {
-    let newCommentsArr = await fetchComments({
+    const newCommentsArr = await fetchComments({
       skip: totalParentCommentsLoaded,
       blog_id: _id,
       setParentCommentCountFun: setTotalParentCommentsLoaded,
       comment_array: commentsArr,
     });
 
-    setBlog({ ...blog, comments: newCommentsArr });
+    setBlog((prevBlog) => ({
+      ...prevBlog,
+      comments: newCommentsArr,
+    }));
   };
 
   return (

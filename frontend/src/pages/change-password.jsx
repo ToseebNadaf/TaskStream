@@ -4,61 +4,75 @@ import InputBox from "../components/input";
 import { Toaster, toast } from "react-hot-toast";
 import axios from "axios";
 import { UserContext } from "../App";
+import { z } from "zod";
+
+const passwordSchema = z.object({
+  currentPassword: z
+    .string()
+    .min(6, "Password must be at least 6 characters long.")
+    .max(20, "Password must not exceed 20 characters.")
+    .regex(
+      /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])/,
+      "Password must include at least one numeric digit, one lowercase letter, and one uppercase letter."
+    ),
+  newPassword: z
+    .string()
+    .min(6, "Password must be at least 6 characters long.")
+    .max(20, "Password must not exceed 20 characters.")
+    .regex(
+      /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])/,
+      "Password must include at least one numeric digit, one lowercase letter, and one uppercase letter."
+    ),
+});
 
 const ChangePassword = () => {
-  let {
+  const {
     userAuth: { access_token },
   } = useContext(UserContext);
 
-  let changePasswordForm = useRef();
+  const changePasswordForm = useRef();
 
-  let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/;
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    let form = new FormData(changePasswordForm.current);
-    let formData = {};
+    const form = new FormData(changePasswordForm.current);
+    const formData = Object.fromEntries(form.entries());
 
-    for (let [key, value] of form.entries()) {
-      formData[key] = value;
-    }
+    const validationResult = passwordSchema.safeParse(formData);
 
-    let { currentPassword, newPassword } = formData;
-
-    if (!currentPassword.length || !newPassword.length) {
-      return toast.error("Fill all the inputs");
-    }
-
-    if (
-      !passwordRegex.test(currentPassword) ||
-      !passwordRegex.test(newPassword)
-    ) {
-      return toast.error(
-        "Password should be 6 to 20 characters long with 1 numeric, 1 lowercase and 1 uppercase letters"
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map(
+        (err) => err.message
       );
+      return toast.error(errorMessages.join(" "));
     }
+
+    const { currentPassword, newPassword } = formData;
 
     e.target.setAttribute("disabled", true);
+    const loadingToast = toast.loading("Updating password...");
 
-    let loadingToast = toast.loading("Updating...");
+    try {
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_SERVER_DOMAIN}/change-password`,
+        { currentPassword, newPassword },
+        {
+          headers: {
+            Authorization: `${access_token}`,
+          },
+        }
+      );
 
-    axios
-      .post(import.meta.env.VITE_SERVER_DOMAIN + "/change-password", formData, {
-        headers: {
-          Authorization: `${access_token}`,
-        },
-      })
-      .then(({ data }) => {
-        toast.dismiss(loadingToast);
-        e.target.removeAttribute("disabled");
-        return toast.success("Password Updated");
-      })
-      .catch(({ response }) => {
-        toast.dismiss(loadingToast);
-        e.target.removeAttribute("disabled");
-        return toast.error(response.data.error);
-      });
+      toast.dismiss(loadingToast);
+      toast.success("Password updated successfully.");
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.error || "Failed to update password.";
+      toast.dismiss(loadingToast);
+      toast.error(errorMessage);
+    } finally {
+      e.target.removeAttribute("disabled");
+    }
   };
 
   return (

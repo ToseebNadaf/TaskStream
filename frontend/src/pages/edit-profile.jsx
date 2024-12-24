@@ -10,26 +10,26 @@ import { uploadImage } from "../common/aws";
 import { storeInSession } from "../common/session";
 
 const EditProfile = () => {
-  let {
+  const bioLimit = 150;
+
+  const {
     userAuth,
     userAuth: { access_token },
     setUserAuth,
   } = useContext(UserContext);
 
-  let bioLimit = 150;
-
-  let profileImgEle = useRef();
-  let editProfileForm = useRef();
+  const profileImgEle = useRef(null);
+  const editProfileForm = useRef(null);
 
   const [profile, setProfile] = useState(profileDataStructure);
   const [loading, setLoading] = useState(true);
   const [charactersLeft, setCharactersLeft] = useState(bioLimit);
   const [updatedProfileImg, setUpdatedProfileImg] = useState(null);
 
-  let {
+  const {
     personal_info: {
       fullname,
-      username: profile_username,
+      username: profileUsername,
       profile_img,
       email,
       bio,
@@ -40,7 +40,7 @@ const EditProfile = () => {
   useEffect(() => {
     if (access_token) {
       axios
-        .post(import.meta.env.VITE_SERVER_DOMAIN + "/get-profile", {
+        .post(`${import.meta.env.VITE_SERVER_DOMAIN}/get-profile`, {
           username: userAuth.username,
         })
         .then(({ data }) => {
@@ -48,7 +48,7 @@ const EditProfile = () => {
           setLoading(false);
         })
         .catch((err) => {
-          console.log(err);
+          console.error("Error fetching profile:", err);
         });
     }
   }, [access_token]);
@@ -58,72 +58,54 @@ const EditProfile = () => {
   };
 
   const handleImagePreview = (e) => {
-    let img = e.target.files[0];
-
-    profileImgEle.current.src = URL.createObjectURL(img);
-
-    setUpdatedProfileImg(img);
+    const img = e.target.files[0];
+    if (img) {
+      profileImgEle.current.src = URL.createObjectURL(img);
+      setUpdatedProfileImg(img);
+    }
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     e.preventDefault();
+    if (!updatedProfileImg) return;
 
-    if (updatedProfileImg) {
-      let loadingToast = toast.loading("Uploading...");
-      e.target.setAttribute("disabled", true);
+    const loadingToast = toast.loading("Uploading...");
+    e.target.setAttribute("disabled", true);
 
-      uploadImage(updatedProfileImg, access_token)
-        .then((url) => {
-          if (url) {
-            axios
-              .post(
-                import.meta.env.VITE_SERVER_DOMAIN + "/update-profile-img",
-                { url },
-                {
-                  headers: {
-                    Authorization: `${access_token}`,
-                  },
-                }
-              )
-              .then(({ data }) => {
-                let newUserAuth = {
-                  ...userAuth,
-                  profile_img: data.profile_img,
-                };
-
-                storeInSession("user", JSON.stringify(newUserAuth));
-                setUserAuth(newUserAuth);
-
-                setUpdatedProfileImg(null);
-
-                toast.dismiss(loadingToast);
-                e.target.removeAttribute("disabled");
-                toast.success("Uploaded");
-              })
-              .catch(({ response }) => {
-                toast.dismiss(loadingToast);
-                e.target.removeAttribute("disabled");
-                toast.error(response.data.error);
-              });
+    try {
+      const url = await uploadImage(updatedProfileImg, access_token);
+      if (url) {
+        const { data } = await axios.post(
+          `${import.meta.env.VITE_SERVER_DOMAIN}/update-profile-img`,
+          { url },
+          {
+            headers: { Authorization: access_token },
           }
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+        );
+
+        const updatedAuth = { ...userAuth, profile_img: data.profile_img };
+        storeInSession("user", JSON.stringify(updatedAuth));
+        setUserAuth(updatedAuth);
+        setUpdatedProfileImg(null);
+
+        toast.dismiss(loadingToast);
+        toast.success("Profile image updated!");
+      }
+    } catch (err) {
+      console.error("Error uploading profile image:", err);
+      toast.error("Failed to upload image.");
+    } finally {
+      e.target.removeAttribute("disabled");
+      toast.dismiss(loadingToast);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    let form = new FormData(editProfileForm.current);
-    let formData = {};
-
-    for (let [key, value] of form.entries()) {
-      formData[key] = value;
-    }
-
-    let {
+    const form = new FormData(editProfileForm.current);
+    const formData = Object.fromEntries(form.entries());
+    const {
       username,
       bio,
       youtube,
@@ -135,18 +117,18 @@ const EditProfile = () => {
     } = formData;
 
     if (username.length < 3) {
-      return toast.error("Username should be at least 3 letters long");
+      return toast.error("Username should be at least 3 characters long.");
     }
     if (bio.length > bioLimit) {
-      return toast.error(`Bio  should not be more than ${bioLimit} characters`);
+      return toast.error(`Bio should not exceed ${bioLimit} characters.`);
     }
 
-    let loadingToast = toast.loading("Updating...");
+    const loadingToast = toast.loading("Updating profile...");
     e.target.setAttribute("disabled", true);
 
-    axios
-      .post(
-        import.meta.env.VITE_SERVER_DOMAIN + "/update-profile",
+    try {
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_SERVER_DOMAIN}/update-profile`,
         {
           username,
           bio,
@@ -160,28 +142,25 @@ const EditProfile = () => {
           },
         },
         {
-          headers: {
-            Authorization: `${access_token}`,
-          },
+          headers: { Authorization: access_token },
         }
-      )
-      .then(({ data }) => {
-        if (userAuth.username != data.username) {
-          let newUserAuth = { ...userAuth, username: data.username };
+      );
 
-          storeInSession("user", JSON.stringify(newUserAuth));
-          setUserAuth(newUserAuth);
-        }
+      if (userAuth.username !== data.username) {
+        const updatedAuth = { ...userAuth, username: data.username };
+        storeInSession("user", JSON.stringify(updatedAuth));
+        setUserAuth(updatedAuth);
+      }
 
-        toast.dismiss(loadingToast);
-        e.target.removeAttribute("disabled");
-        toast.success("Profile Updated");
-      })
-      .catch(({ response }) => {
-        toast.dismiss(loadingToast);
-        e.target.removeAttribute("disabled");
-        toast.error(response.data.error);
-      });
+      toast.dismiss(loadingToast);
+      toast.success("Profile updated successfully!");
+    } catch ({ response }) {
+      console.error("Error updating profile:", response);
+      toast.error(response.data.error);
+    } finally {
+      e.target.removeAttribute("disabled");
+      toast.dismiss(loadingToast);
+    }
   };
 
   return (
@@ -252,7 +231,7 @@ const EditProfile = () => {
               <InputBox
                 type="text"
                 name="username"
-                value={profile_username}
+                value={profileUsername}
                 placeholder="Username"
                 icon="fi-rr-at"
               />

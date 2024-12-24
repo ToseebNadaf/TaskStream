@@ -17,12 +17,12 @@ const userAuthSchema = z.object({
     .optional(),
   email: z
     .string()
-    .email({ message: "Email is Invalid" })
-    .nonempty({ message: "Enter Email" }),
+    .email({ message: "Invalid email address" })
+    .nonempty({ message: "Email is required" }),
   password: z
     .string()
-    .min(6, { message: "Password should be at least 6 characters long" })
-    .max(20, { message: "Password should not exceed 20 characters" })
+    .min(6, { message: "Password must be at least 6 characters long" })
+    .max(20, { message: "Password must not exceed 20 characters" })
     .regex(/[a-z]/, {
       message: "Password must contain at least one lowercase letter",
     })
@@ -44,9 +44,10 @@ const UserAuthForm = ({ type }) => {
       .then(({ data }) => {
         storeInSession("user", JSON.stringify(data));
         setUserAuth(data);
+        toast.success("Authentication successful!");
       })
       .catch(({ response }) => {
-        toast.error(response.data.error);
+        toast.error(response?.data?.error || "An error occurred");
       });
   };
 
@@ -54,10 +55,7 @@ const UserAuthForm = ({ type }) => {
     e.preventDefault();
 
     const formData = new FormData(formElement);
-    let formObject = {};
-    for (let [key, value] of formData.entries()) {
-      formObject[key] = value;
-    }
+    const formObject = Object.fromEntries(formData.entries());
 
     const result = userAuthSchema.safeParse(formObject);
 
@@ -66,8 +64,7 @@ const UserAuthForm = ({ type }) => {
       return;
     }
 
-    let serverRoute = type === "sign-in" ? "/signin" : "/signup";
-
+    const serverRoute = type === "sign-in" ? "/signin" : "/signup";
     userAuthThroughServer(serverRoute, formObject);
   };
 
@@ -77,15 +74,12 @@ const UserAuthForm = ({ type }) => {
     try {
       const user = await authWithGoogle();
 
-      let serverRoute = "/google-auth";
-      let formData = {
-        access_token: user.accessToken,
-      };
+      const serverRoute = "/google-auth";
+      const formData = { access_token: user.accessToken };
 
       userAuthThroughServer(serverRoute, formData);
     } catch (err) {
-      toast.error(err.message);
-      console.error(err);
+      toast.error(err.message || "Google Authentication failed");
     }
   };
 

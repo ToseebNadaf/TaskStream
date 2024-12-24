@@ -10,11 +10,11 @@ const CommentField = ({
   replyingTo = undefined,
   setReplying,
 }) => {
-  let {
+  const {
     blog,
     blog: {
       _id,
-      author: { _id: blog_author },
+      author: { _id: blogAuthorId },
       comments,
       comments: { results: commentsArr },
       activity,
@@ -24,84 +24,88 @@ const CommentField = ({
     setTotalParentCommentsLoaded,
   } = useContext(BlogContext);
 
-  let {
+  const {
     userAuth: { access_token, username, fullname, profile_img },
   } = useContext(UserContext);
 
   const [comment, setComment] = useState("");
 
-  const handleComment = () => {
+  const handleComment = async () => {
     if (!access_token) {
-      return toast.error("Sign-in first to leave a comment");
+      return toast.error("Sign in first to leave a comment");
     }
 
-    if (!comment.length) {
+    if (!comment.trim()) {
       return toast.error("Write something to leave a comment");
     }
 
-    axios
-      .post(
-        import.meta.env.VITE_SERVER_DOMAIN + "/add-comment",
+    try {
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_SERVER_DOMAIN}/add-comment`,
         {
           _id,
-          blog_author,
+          blog_author: blogAuthorId,
           comment,
           replying_to: replyingTo,
         },
         {
-          headers: {
-            Authorization: `${access_token}`,
-          },
+          headers: { Authorization: access_token },
         }
-      )
-      .then(({ data }) => {
-        setComment("");
+      );
 
-        data.commented_by = {
+      // Clear input after comment submission
+      setComment("");
+
+      // Prepare new comment object
+      const newComment = {
+        ...data,
+        commented_by: {
           personal_info: { username, profile_img, fullname },
-        };
+        },
+      };
 
-        let newCommentArr;
+      let updatedCommentsArr = [...commentsArr];
 
-        if (replyingTo) {
-          commentsArr[index].children.push(data._id);
+      // If replying to a comment
+      if (replyingTo) {
+        newComment.childrenLevel = commentsArr[index].childrenLevel + 1;
+        newComment.parentIndex = index;
 
-          data.childrenLevel = commentsArr[index].childrenLevel + 1;
-          data.parentIndex = index;
+        // Update parent comment's children and add new reply
+        commentsArr[index].children.push(newComment._id);
+        commentsArr[index].isReplyLoaded = true;
 
-          commentsArr[index].isReplyLoaded = true;
+        // Insert the reply just below the parent comment
+        updatedCommentsArr.splice(index + 1, 0, newComment);
 
-          commentsArr.splice(index + 1, 0, data);
+        setReplying(false);
+      } else {
+        // Add new parent-level comment
+        newComment.childrenLevel = 0;
+        updatedCommentsArr = [newComment, ...commentsArr];
+      }
 
-          newCommentArr = commentsArr;
+      // Update blog state
+      const parentCommentIncrement = replyingTo ? 0 : 1;
 
-          setReplying(false);
-        } else {
-          data.childrenLevel = 0;
+      setBlog((prevBlog) => ({
+        ...prevBlog,
+        comments: {
+          ...prevBlog.comments,
+          results: updatedCommentsArr,
+        },
+        activity: {
+          ...prevBlog.activity,
+          total_comments: total_comments + 1,
+          total_parent_comments: total_parent_comments + parentCommentIncrement,
+        },
+      }));
 
-          newCommentArr = [data, ...commentsArr];
-        }
-
-        let parentCommentIncrementval = replyingTo ? 0 : 1;
-
-        setBlog({
-          ...blog,
-          comments: { ...comments, results: newCommentArr },
-          activity: {
-            ...activity,
-            total_comments: total_comments + 1,
-            total_parent_comments:
-              total_parent_comments + parentCommentIncrementval,
-          },
-        });
-
-        setTotalParentCommentsLoaded(
-          (preVal) => preVal + parentCommentIncrementval
-        );
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+      setTotalParentCommentsLoaded((prev) => prev + parentCommentIncrement);
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      toast.error("Failed to add comment. Please try again.");
+    }
   };
 
   return (
