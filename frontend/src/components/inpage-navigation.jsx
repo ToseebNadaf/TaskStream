@@ -12,36 +12,31 @@ const InPageNavigation = ({
   activeTabLineRef = useRef();
   activeTabRef = useRef();
 
-  let [inPageNavIndex, setInPageNavIndex] = useState(defaultActiveIndex);
+  const [inPageNavIndex, setInPageNavIndex] = useState(defaultActiveIndex);
+  const [width, setWidth] = useState(window.innerWidth);
 
-  let [isResizeEventAdded, setIsResizeEventAdded] = useState(false);
-
-  let [width, setWidth] = useState(window.innerWidth);
-
-  let changePageState = (btn, i) => {
-    let { offsetWidth, offsetLeft } = btn;
-
-    activeTabLineRef.current.style.width = offsetWidth + "px";
-    activeTabLineRef.current.style.left = offsetLeft + "px";
-
-    setInPageNavIndex(i);
+  const updateTabLine = (btn, index) => {
+    const { offsetWidth, offsetLeft } = btn;
+    if (activeTabLineRef.current) {
+      activeTabLineRef.current.style.width = `${offsetWidth}px`;
+      activeTabLineRef.current.style.left = `${offsetLeft}px`;
+    }
+    setInPageNavIndex(index);
   };
 
   useEffect(() => {
-    if (width > 766 && inPageNavIndex != defaultActiveIndex) {
-      changePageState(activeTabRef.current, defaultActiveIndex);
+    if (width > 766 && inPageNavIndex !== defaultActiveIndex) {
+      updateTabLine(activeTabRef.current, defaultActiveIndex);
     }
 
-    if (!isResizeEventAdded) {
-      window.addEventListener("resize", () => {
-        if (!isResizeEventAdded) {
-          setIsResizeEventAdded(true);
-        }
+    const handleResize = () => setWidth(window.innerWidth);
 
-        setWidth(window.innerWidth);
-      });
-    }
-  }, [width]);
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [width, inPageNavIndex, defaultActiveIndex]);
 
   return (
     <>
@@ -57,7 +52,7 @@ const InPageNavigation = ({
                 (defaultHidden.includes(route) ? " md:hidden " : " ")
               }
               onClick={(e) => {
-                changePageState(e.target, i);
+                updateTabLine(e.target, i);
               }}
             >
               {route}

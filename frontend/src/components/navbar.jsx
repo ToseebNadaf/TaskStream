@@ -6,8 +6,8 @@ import UserNavigationPanel from "./user-navigation";
 import axios from "axios";
 
 const Navbar = () => {
-  const [searchBoxVisibility, setSearchBoxVisibility] = useState(false);
-  const [userNavPanel, setUserNavPanel] = useState(false);
+  const [isSearchBoxVisible, setIsSearchBoxVisible] = useState(false);
+  const [isUserNavPanelVisible, setIsUserNavPanelVisible] = useState(false);
 
   const navigate = useNavigate();
 
@@ -18,42 +18,38 @@ const Navbar = () => {
   } = useContext(UserContext);
 
   useEffect(() => {
-    if (access_token) {
-      const fetchNotifications = async () => {
-        try {
-          const { data } = await axios.get(
-            `${import.meta.env.VITE_SERVER_DOMAIN}/new-notification`,
-            {
-              headers: {
-                Authorization: `${access_token}`,
-              },
-            }
-          );
-          setUserAuth((prevState) => ({ ...prevState, ...data }));
-        } catch (err) {
-          console.error("Error fetching notifications:", err);
-        }
-      };
+    const fetchNotifications = async () => {
+      if (!access_token) return;
 
-      fetchNotifications();
-    }
+      try {
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_SERVER_DOMAIN}/new-notification`,
+          {
+            headers: { Authorization: access_token },
+          }
+        );
+        setUserAuth((prevState) => ({ ...prevState, ...data }));
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+
+    fetchNotifications();
   }, [access_token, setUserAuth]);
 
-  const handleUserNavPanel = useCallback(() => {
-    setUserNavPanel((prev) => !prev);
+  const toggleUserNavPanel = useCallback(() => {
+    setIsUserNavPanelVisible((prev) => !prev);
   }, []);
 
-  const handleSearch = (e) => {
-    const query = e.target.value.trim();
-    if (e.keyCode === 13 && query.length > 0) {
+  const handleSearch = (event) => {
+    const query = event.target.value.trim();
+    if (event.key === "Enter" && query) {
       navigate(`/search/${query}`);
     }
   };
 
   const handleBlur = () => {
-    setTimeout(() => {
-      setUserNavPanel(false);
-    }, 200);
+    setTimeout(() => setIsUserNavPanelVisible(false), 200);
   };
 
   return (
@@ -66,7 +62,7 @@ const Navbar = () => {
         <div
           className={
             "absolute bg-white w-full left-0 top-full mt-0.5 border-b border-grey py-4 px-[5vw] md:border-0 md:block md:relative md:inset-0 md:p-0 md:w-auto md:show " +
-            (searchBoxVisibility ? "show" : "hide")
+            (isSearchBoxVisible ? "show" : "hide")
           }
         >
           <input
@@ -82,7 +78,7 @@ const Navbar = () => {
         <div className="flex items-center gap-3 md:gap-6 ml-auto">
           <button
             className="md:hidden bg-grey w-12 h-12 rounded-full flex items-center justify-center"
-            onClick={() => setSearchBoxVisibility((currentVal) => !currentVal)}
+            onClick={() => setIsSearchBoxVisible((currentVal) => !currentVal)}
           >
             <i className="fi fi-rr-search text-xl"></i>
           </button>
@@ -107,7 +103,7 @@ const Navbar = () => {
 
               <div
                 className="relative"
-                onClick={handleUserNavPanel}
+                onClick={toggleUserNavPanel}
                 onBlur={handleBlur}
               >
                 <button className="w-12 h-12 mt-1">
@@ -117,7 +113,7 @@ const Navbar = () => {
                   />
                 </button>
 
-                {userNavPanel ? <UserNavigationPanel /> : ""}
+                {isUserNavPanelVisible ? <UserNavigationPanel /> : ""}
               </div>
             </>
           ) : (

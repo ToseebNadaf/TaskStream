@@ -9,26 +9,36 @@ export const filterPaginationData = async ({
   data_to_send = {},
   user = undefined,
 }) => {
-  let obj;
-
   const headers = user ? { Authorization: `${user}` } : {};
+  let resultObj = null;
 
   try {
-    if (state !== null && !create_new_arr) {
-      obj = { ...state, results: [...state.results, ...data], page };
+    if (state && !create_new_arr) {
+      resultObj = {
+        ...state,
+        results: [...state.results, ...data],
+        page,
+      };
     } else {
-      const response = await axios.post(
+      const { data: response } = await axios.post(
         `${import.meta.env.VITE_SERVER_DOMAIN}${countRoute}`,
         data_to_send,
         { headers }
       );
 
-      const { totalDocs } = response.data;
-      obj = { results: data, page: 1, totalDocs };
+      const { totalDocs } = response;
+      resultObj = {
+        results: data,
+        page: 1,
+        totalDocs,
+      };
     }
-  } catch (err) {
-    console.error("Error fetching pagination data:", err);
+  } catch (error) {
+    console.error("Error fetching pagination data:", error);
+    throw new Error(
+      "Unable to fetch or process pagination data. Please try again later."
+    );
   }
 
-  return obj;
+  return resultObj;
 };

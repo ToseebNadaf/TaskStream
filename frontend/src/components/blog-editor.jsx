@@ -10,6 +10,7 @@ import AnimationWrapper from "../common/page-animation";
 import { EditorContext } from "../pages/editor";
 import { UserContext } from "../App";
 import { tools } from "./tools";
+import { z } from "zod";
 
 const BlogEditor = () => {
   const DEFAULT_BANNER = Banner;
@@ -29,6 +30,17 @@ const BlogEditor = () => {
 
   const { blog_id } = useParams();
   const navigate = useNavigate();
+
+  const blogSchema = z.object({
+    title: z.string().min(1, "Title cannot be empty."),
+    banner: z
+      .string()
+      .url("Invalid banner URL.")
+      .min(1, "Upload a blog banner."),
+    content: z.object({
+      blocks: z.array(z.any()).min(1, "Write something in your blog."),
+    }),
+  });
 
   useEffect(() => {
     if (!textEditor.isReady) {
@@ -79,24 +91,23 @@ const BlogEditor = () => {
   };
 
   const handlePublishEvent = () => {
-    if (!banner.length) {
-      return toast.error("Upload a blog banner to publish it");
-    }
-
-    if (!title.length) {
-      return toast.error("Write a blog title to publish it");
-    }
-
     if (textEditor.isReady) {
       textEditor
         .save()
         .then((data) => {
-          if (data.blocks.length) {
-            setBlog({ ...blog, content: data });
-            setEditorState("publish");
-          } else {
-            toast.error("Write something in your blog to publish it");
+          const validation = blogSchema.safeParse({
+            title,
+            banner,
+            content: data,
+          });
+
+          if (!validation.success) {
+            validation.error.errors.forEach((err) => toast.error(err.message));
+            return;
           }
+
+          setBlog({ ...blog, content: data });
+          setEditorState("publish");
         })
         .catch((err) => console.error(err));
     }

@@ -11,11 +11,11 @@ import { filterPaginationData } from "../common/filter-pagination-data";
 import LoadMoreDataBtn from "../components/load-more";
 
 const Home = () => {
-  let [blogs, setBlog] = useState(null);
-  let [trendingBlogs, setTrendingBlog] = useState(null);
-  let [pageState, setPageState] = useState("home");
+  const [blogs, setBlogs] = useState(null);
+  const [trendingBlogs, setTrendingBlogs] = useState(null);
+  const [pageState, setPageState] = useState("home");
 
-  let categories = [
+  const categories = [
     "programming",
     "education",
     "health",
@@ -27,77 +27,69 @@ const Home = () => {
     "travel",
   ];
 
-  const fetchLatestBlogs = ({ page = 1 }) => {
-    axios
-      .post(import.meta.env.VITE_SERVER_DOMAIN + "/latest-blogs", { page })
-      .then(async ({ data }) => {
-        let formatedData = await filterPaginationData({
-          state: blogs,
-          data: data.blogs,
-          page,
-          countRoute: "/all-latest-blogs-count",
-        });
-
-        setBlog(formatedData);
-      })
-      .catch((err) => {
-        console.log(err);
+  const fetchBlogs = async (url, params, updateStateFn) => {
+    try {
+      const { data } = await axios.post(url, params);
+      const formattedData = await filterPaginationData({
+        state: blogs,
+        data: data.blogs,
+        page: params.page,
+        countRoute: params.countRoute,
+        data_to_send: params.data_to_send,
       });
+      updateStateFn(formattedData);
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+      toast.error("Failed to load blogs. Please try again later.");
+    }
   };
 
-  const fetchBlogsByCategory = ({ page = 1 }) => {
-    axios
-      .post(import.meta.env.VITE_SERVER_DOMAIN + "/search-blogs", {
+  const fetchLatestBlogs = (page = 1) => {
+    fetchBlogs(
+      `${import.meta.env.VITE_SERVER_DOMAIN}/latest-blogs`,
+      { page, countRoute: "/all-latest-blogs-count" },
+      setBlogs
+    );
+  };
+
+  const fetchBlogsByCategory = (page = 1) => {
+    fetchBlogs(
+      `${import.meta.env.VITE_SERVER_DOMAIN}/search-blogs`,
+      {
         tag: pageState,
         page,
-      })
-      .then(async ({ data }) => {
-        let formatedData = await filterPaginationData({
-          state: blogs,
-          data: data.blogs,
-          page,
-          countRoute: "/search-blogs-count",
-          data_to_send: { tag: pageState },
-        });
-
-        setBlog(formatedData);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+        countRoute: "/search-blogs-count",
+        data_to_send: { tag: pageState },
+      },
+      setBlogs
+    );
   };
 
-  const fetchTrendingBlogs = () => {
-    axios
-      .get(import.meta.env.VITE_SERVER_DOMAIN + "/trending-blogs")
-      .then(({ data }) => {
-        setTrendingBlog(data.blogs);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
-
-  const loadBlogByCategory = (e) => {
-    let category = e.target.innerText.toLowerCase();
-
-    setBlog(null);
-
-    if (pageState == category) {
-      setPageState("home");
-      return;
+  const fetchTrendingBlogs = async () => {
+    try {
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_SERVER_DOMAIN}/trending-blogs`
+      );
+      setTrendingBlogs(data.blogs);
+    } catch (error) {
+      console.error("Error fetching trending blogs:", error);
+      toast.error("Failed to load trending blogs. Please try again later.");
     }
+  };
 
-    setPageState(category);
+  const handleCategoryClick = (e) => {
+    const category = e.target.innerText.toLowerCase();
+    setBlogs(null);
+    setPageState((prevState) => (prevState === category ? "home" : category));
   };
 
   useEffect(() => {
-    activeTabRef.current.click();
+    if (activeTabRef.current) activeTabRef.current.click();
 
-    if (pageState == "home") {
-      fetchLatestBlogs({ page: 1 });
+    if (pageState === "home") {
+      fetchLatestBlogs(1);
     } else {
-      fetchBlogsByCategory({ page: 1 });
+      fetchBlogsByCategory(1);
     }
 
     if (!trendingBlogs) {
@@ -169,7 +161,7 @@ const Home = () => {
                 {categories.map((category, i) => {
                   return (
                     <button
-                      onClick={loadBlogByCategory}
+                      onClick={handleCategoryClick}
                       className={
                         "tag " +
                         (pageState == category ? " bg-black text-white " : " ")
