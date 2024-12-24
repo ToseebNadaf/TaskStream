@@ -41,39 +41,6 @@ const NotificationCard = ({ data, index, notificationState }) => {
     setReplying((preVal) => !preVal);
   };
 
-  const handleDelete = (comment_id, type, target) => {
-    target.setAttribute("disabled", true);
-
-    axios
-      .post(
-        import.meta.env.VITE_SERVER_DOMAIN + "/delete-comment",
-        { _id: comment_id },
-        {
-          headers: {
-            Authorization: `${access_token}`,
-          },
-        }
-      )
-      .then(() => {
-        if (type == "comment") {
-          results.splice(index, 1);
-        } else {
-          delete results[index].reply;
-        }
-
-        target.removeAttribute("disabled");
-        setNotifications({
-          ...notifications,
-          results,
-          totalDocs: totalDocs - 1,
-          deleteDocCount: notifications.deleteDocCount + 1,
-        });
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
-
   return (
     <div
       className={
@@ -137,12 +104,6 @@ const NotificationCard = ({ data, index, notificationState }) => {
             ) : (
               ""
             )}
-            <button
-              className="underline hover:text-black"
-              onClick={(e) => handleDelete(comment._id, "comment", e.target)}
-            >
-              Delete
-            </button>
           </>
         ) : (
           ""
@@ -192,13 +153,6 @@ const NotificationCard = ({ data, index, notificationState }) => {
           </div>
 
           <p className="ml-14 font-gelasio text-xl my-2">{reply.comment}</p>
-
-          <button
-            className="underline hover:text-black ml-14 mt-2"
-            onClick={(e) => handleDelete(reply._id, "reply", e.target)}
-          >
-            Delete
-          </button>
         </div>
       ) : (
         ""

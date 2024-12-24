@@ -124,28 +124,6 @@ const CommentCard = ({ index, leftVal, commentData }) => {
     }
   };
 
-  const deleteComment = (e) => {
-    e.target.setAttribute("disabled", true);
-
-    axios
-      .post(
-        import.meta.env.VITE_SERVER_DOMAIN + "/delete-comment",
-        { _id },
-        {
-          headers: {
-            Authorization: `${access_token}`,
-          },
-        }
-      )
-      .then(() => {
-        e.target.removeAttribute("disabled");
-        removeCommentsCards(index + 1, true);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
-
   const hideReplies = () => {
     commentData.isReplyLoaded = false;
 
@@ -224,17 +202,6 @@ const CommentCard = ({ index, leftVal, commentData }) => {
           <button className="underline" onClick={handleReplyClick}>
             Reply
           </button>
-
-          {username == commented_by_username || username == blog_author ? (
-            <button
-              className="p-2 px-3 rounded-md border border-grey ml-auto  hover:bg-red/30 hover:text-red flex items-center"
-              onClick={deleteComment}
-            >
-              <i className="fi fi-rr-trash pointer-events-none"></i>
-            </button>
-          ) : (
-            ""
-          )}
         </div>
 
         {isReplying ? (
