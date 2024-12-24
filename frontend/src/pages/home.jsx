@@ -9,6 +9,7 @@ import { activeTabRef } from "../components/inpage-navigation";
 import NoDataMessage from "../components/nodata";
 import { filterPaginationData } from "../common/filter-pagination-data";
 import LoadMoreDataBtn from "../components/load-more";
+import { Toaster, toast } from "react-hot-toast";
 
 const Home = () => {
   const [blogs, setBlogs] = useState(null);
@@ -44,7 +45,7 @@ const Home = () => {
     }
   };
 
-  const fetchLatestBlogs = (page = 1) => {
+  const fetchLatestBlogs = ({ page = 1 }) => {
     fetchBlogs(
       `${import.meta.env.VITE_SERVER_DOMAIN}/latest-blogs`,
       { page, countRoute: "/all-latest-blogs-count" },
@@ -52,7 +53,7 @@ const Home = () => {
     );
   };
 
-  const fetchBlogsByCategory = (page = 1) => {
+  const fetchBlogsByCategory = ({ page = 1 }) => {
     fetchBlogs(
       `${import.meta.env.VITE_SERVER_DOMAIN}/search-blogs`,
       {
@@ -99,6 +100,7 @@ const Home = () => {
 
   return (
     <AnimationWrapper>
+      <Toaster />
       <section className="h-cover flex justify-center gap-10">
         <div className="w-full">
           <InPageNavigation

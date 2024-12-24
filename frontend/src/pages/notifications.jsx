@@ -7,28 +7,24 @@ import AnimationWrapper from "../common/page-animation";
 import NoDataMessage from "../components/nodata";
 import NotificationCard from "../components/notification-card";
 import LoadMoreDataBtn from "../components/load-more";
+import toast, { Toaster } from "react-hot-toast";
 
 const Notifications = () => {
-  let {
-    userAuth,
-    userAuth: { access_token, new_notification_available },
-    setUserAuth,
-  } = useContext(UserContext);
+  const { userAuth, setUserAuth } = useContext(UserContext);
+  const { access_token, new_notification_available } = userAuth;
 
   const [filter, setFilter] = useState("all");
   const [notifications, setNotifications] = useState(null);
 
-  let filters = ["all", "like", "comment", "reply"];
+  const filters = ["all", "like", "comment", "reply"];
 
   const fetchNotifications = ({ page, deletedDocCount = 0 }) => {
     axios
       .post(
-        import.meta.env.VITE_SERVER_DOMAIN + "/notifications",
+        `${import.meta.env.VITE_SERVER_DOMAIN}/notifications`,
         { page, filter, deletedDocCount },
         {
-          headers: {
-            Authorization: `${access_token}`,
-          },
+          headers: { Authorization: `${access_token}` },
         }
       )
       .then(async ({ data: { notifications: data } }) => {
@@ -36,7 +32,7 @@ const Notifications = () => {
           setUserAuth({ ...userAuth, new_notification_available: false });
         }
 
-        let formatedData = await filterPaginationData({
+        const formattedData = await filterPaginationData({
           state: notifications,
           data,
           page,
@@ -45,10 +41,11 @@ const Notifications = () => {
           user: access_token,
         });
 
-        setNotifications(formatedData);
+        setNotifications(formattedData);
       })
       .catch((err) => {
-        console.log(err);
+        console.error("Error fetching notifications:", err);
+        toast.error("Failed to fetch notifications. Please try again.");
       });
   };
 
@@ -59,63 +56,66 @@ const Notifications = () => {
   }, [access_token, filter]);
 
   const handleFilter = (e) => {
-    let btn = e.target;
-
-    setFilter(btn.innerHTML);
-
+    const selectedFilter = e.target.innerHTML.toLowerCase();
+    setFilter(selectedFilter);
     setNotifications(null);
   };
 
   return (
-    <div>
-      <h1 className="max-md:hidden capitalize font-bold text-3xl">
-        Recent Notifications
-      </h1>
+    <>
+      <Toaster />
+      <div>
+        <h1 className="max-md:hidden capitalize font-bold text-3xl">
+          Recent Notifications
+        </h1>
 
-      <div className="my-8 flex gap-6">
-        {filters.map((filterName, i) => {
-          return (
-            <button
-              key={i}
-              className={
-                "py-2 " + (filter == filterName ? "btn-dark" : "btn-light")
-              }
-              onClick={handleFilter}
-            >
-              {filterName}
-            </button>
-          );
-        })}
+        <div className="my-8 flex gap-6">
+          {filters.map((filterName, i) => {
+            return (
+              <button
+                key={i}
+                className={
+                  "py-2 " + (filter == filterName ? "btn-dark" : "btn-light")
+                }
+                onClick={handleFilter}
+              >
+                {filterName}
+              </button>
+            );
+          })}
+        </div>
+
+        {notifications == null ? (
+          <Loader />
+        ) : (
+          <>
+            {notifications.results.length ? (
+              notifications.results.map((notification, i) => {
+                return (
+                  <AnimationWrapper key={i} transition={{ delay: i * 0.08 }}>
+                    <NotificationCard
+                      data={notification}
+                      index={i}
+                      notificationState={{ notifications, setNotifications }}
+                    />
+                  </AnimationWrapper>
+                );
+              })
+            ) : (
+              <NoDataMessage message="Nothing available" />
+            )}
+
+            <LoadMoreDataBtn
+              state={notifications}
+              fetchDataFun={fetchNotifications}
+              additionalParam={{
+                deletedDocCount: notifications.deletedDocCount,
+              }}
+            />
+          </>
+        )}
       </div>
-
-      {notifications == null ? (
-        <Loader />
-      ) : (
-        <>
-          {notifications.results.length ? (
-            notifications.results.map((notification, i) => {
-              return (
-                <AnimationWrapper key={i} transition={{ delay: i * 0.08 }}>
-                  <NotificationCard
-                    data={notification}
-                    index={i}
-                    notificationState={{ notifications, setNotifications }}
-                  />
-                </AnimationWrapper>
-              );
-            })
-          ) : (
-            <NoDataMessage message="Nothing available" />
-          )}
-
-          <LoadMoreDataBtn
-            state={notifications}
-            fetchDataFun={fetchNotifications}
-            additionalParam={{ deletedDocCount: notifications.deletedDocCount }}
-          />
-        </>
-      )}
-    </div>
+    </>
   );
 };
 
