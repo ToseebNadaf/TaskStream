@@ -13,6 +13,7 @@ const InPageNavigation = ({
   activeTabRef = useRef();
 
   const [inPageNavIndex, setInPageNavIndex] = useState(defaultActiveIndex);
+  const [isResizeEventAdded, setIsResizeEventAdded] = useState(false);
   const [width, setWidth] = useState(window.innerWidth);
 
   const updateTabLine = (btn, index) => {
@@ -29,14 +30,16 @@ const InPageNavigation = ({
       updateTabLine(activeTabRef.current, defaultActiveIndex);
     }
 
-    const handleResize = () => setWidth(window.innerWidth);
+    if (!isResizeEventAdded) {
+      window.addEventListener("resize", () => {
+        if (!isResizeEventAdded) {
+          setIsResizeEventAdded(true);
+        }
 
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [width, inPageNavIndex, defaultActiveIndex]);
+        setWidth(window.innerWidth);
+      });
+    }
+  }, [width]);
 
   return (
     <>

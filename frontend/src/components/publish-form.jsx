@@ -111,7 +111,7 @@ const PublishForm = () => {
 
   return (
     <AnimationWrapper>
-      <section className="w-screen min-h-screen grid items-center lg:grid-cols-2 py-[16rem] lg:gap-4">
+      <section className="w-screen min-h-screen grid items-center lg:grid-cols-2 py-[14rem] lg:gap-4">
         <Toaster />
 
         <button
@@ -157,7 +157,7 @@ const PublishForm = () => {
             {CHARACTER_LIMIT - des.length} characters left
           </p>
 
-          <p className="text-dark-grey mb-2 mt-9">Topics (Tags)</p>
+          <p className="text-dark-grey mb-2 mt-9">Topics (Tags: Keep in lowercase)</p>
           <div className="relative input-box pl-2 py-2 pb-4">
             <input
               type="text"

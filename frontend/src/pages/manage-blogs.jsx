@@ -118,7 +118,6 @@ const ManageBlogs = () => {
         defaultActiveIndex={activeTab != "draft" ? 0 : 1}
       >
         {
-          //published blogs
           blogs == null ? (
             <Loader />
           ) : blogs.results.length ? (
@@ -148,7 +147,6 @@ const ManageBlogs = () => {
         }
 
         {
-          //draft blogs
           drafts == null ? (
             <Loader />
           ) : drafts.results.length ? (

@@ -19,7 +19,7 @@ const BlogInteraction = () => {
       },
     },
     setBlog,
-    islikedByUser,
+    isLikedByUser,
     setLikedByUser,
     setCommentsWrapper,
   } = useContext(BlogContext);
@@ -65,7 +65,7 @@ const BlogInteraction = () => {
 
       await axios.post(
         `${import.meta.env.VITE_SERVER_DOMAIN}/like-blog`,
-        { _id, islikedByUser },
+        { _id, isLikedByUser },
         {
           headers: { Authorization: access_token },
         }
@@ -90,12 +90,12 @@ const BlogInteraction = () => {
             onClick={handleLike}
             className={
               "w-10 h-10 rounded-full flex items-center justify-center " +
-              (islikedByUser ? "bg-red/20 text-red" : "bg-grey/80")
+              (isLikedByUser ? "bg-red/20 text-red" : "bg-grey/80")
             }
           >
             <i
               className={
-                "fi " + (islikedByUser ? "fi-sr-heart" : "fi-rr-heart")
+                "fi " + (isLikedByUser ? "fi-sr-heart" : "fi-rr-heart")
               }
             ></i>
           </button>

@@ -190,7 +190,7 @@ const BlogEditor = () => {
                 <img
                   src={banner}
                   alt="Blog Banner"
-                  className="z-20"
+                  className="z-20 cursor-pointer"
                   onError={handleError}
                 />
                 <input
