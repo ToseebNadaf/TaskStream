@@ -26,7 +26,7 @@ const Blog = () => {
   const [blog, setBlog] = useState(blogStructure);
   const [similarBlogs, setSimilarBlogs] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isLikedByUser, setLikedByUser] = useState(false);
+  const [islikedByUser, setLikedByUser] = useState(false);
   const [commentsWrapper, setCommentsWrapper] = useState(false);
   const [totalParentCommentsLoaded, setTotalParentCommentsLoaded] = useState(0);
 
@@ -98,7 +98,7 @@ const Blog = () => {
           value={{
             blog,
             setBlog,
-            isLikedByUser,
+            islikedByUser,
             setLikedByUser,
             commentsWrapper,
             setCommentsWrapper,

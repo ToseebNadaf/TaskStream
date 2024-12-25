@@ -268,7 +268,7 @@ const EditProfile = () => {
                       name={key}
                       type="text"
                       value={link}
-                      placeholder="https://"
+                      placeholder="https://example.com"
                       icon={
                         "fi " +
                         (key != "website" ? "fi-brands-" + key : "fi-rr-globe")
